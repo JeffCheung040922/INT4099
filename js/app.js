@@ -5,7 +5,6 @@ const params = new URLSearchParams(location.search);
 const dock = $("#dock"), obj = $("#obj");
 
 // ---------- storage
-const STORE_KEY = "story-v9";
 const COLORS = COLOR_NAMES;
 const defaults = () => ({ students: [], current: null, settings: { limit: DEFAULT_LIMIT, sfx: true } });
 let store;

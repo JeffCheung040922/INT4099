@@ -1,16 +1,31 @@
-// Teacher site: reads the players' records from the server, shows how each player is doing, and sets the game's settings.
+// Teacher site: shows how each player is doing and sets the game's settings. The records come from the server (server.mjs).
+// With no server (for example on GitHub Pages) it reads the same browser's records instead, so both sites still work on one device.
 const $ = (s) => document.querySelector(s);
-let data = emptyData(), sel = null, aiOn = false;
+let data = emptyData(), sel = null, aiOn = false, local = false;
 const levelStars = (n) => [1, 2, 3].map((i) => `<svg viewBox="0 0 24 24" class="star ${i <= n ? "on" : ""}" aria-hidden="true"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.5 5.8 21l1.4-7L2 9.3l7-.8z"/></svg>`).join("");
 const pct = (o) => (o ? Math.round(o.rate * 100) + "%" : "–");
 const post = (url, body) => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
+// Reading and writing records: on the server, or in this browser when there is no server.
+const readLocal = () => { try { return JSON.parse(localStorage.getItem(STORE_KEY) || "{}"); } catch { return {}; } };
+const writeLocal = (change) => { const st = { students: [], settings: {}, ...readLocal() }; change(st); localStorage.setItem(STORE_KEY, JSON.stringify(st)); };
+async function setSettings(settings) {
+  if (local) { writeLocal((st) => { st.settings = { ...st.settings, ...cleanSettings(settings) }; }); data.settings = { ...data.settings, ...cleanSettings(settings) }; }
+  else data.settings = await (await post("../api/settings", { settings })).json();
+}
+async function saveStudent(s) { s.updated = Date.now(); if (local) writeLocal((st) => { st.students = st.students.map((x) => (x.id === s.id ? s : x)); }); else await post("../api/student", { student: s }); }
+async function removePlayer(id) { if (local) writeLocal((st) => { st.students = st.students.filter((x) => x.id !== id); }); else await post("../api/student/delete", { id }); }
+
 async function load() {
   try {
     const [d, st] = await Promise.all([fetch("../api/data").then((r) => r.json()), fetch("../api/status").then((r) => r.json())]);
-    data = { ...emptyData(), ...d }; aiOn = !!st.ai;
+    data = { ...emptyData(), ...d }; aiOn = !!st.ai; local = false;
     $("#status").textContent = `Updated ${new Date().toLocaleTimeString()} · AI helper ${aiOn ? "on" : "off"}`;
-  } catch { $("#status").textContent = "The server is not running. Start it with: node server.mjs"; }
+  } catch {
+    const st = readLocal(); local = true; aiOn = false;
+    data = { ...emptyData(), students: (st.students || []).filter((x) => x && Array.isArray(x.runs) && COLOR_NAMES.includes(x.color)), settings: cleanSettings(st.settings) };
+    $("#status").textContent = "No server: showing this browser's records (open the student site in this same browser). No AI.";
+  }
   if (!sel || !data.students.some((s) => s.id === sel)) sel = data.students[0] ? data.students[0].id : null;
   const snapshot = JSON.stringify([data, sel]);
   if (snapshot !== lastShown) { lastShown = snapshot; render(); } // only redraw when something changed, so a summary being read stays
@@ -91,13 +106,13 @@ document.addEventListener("click", async (e) => {
   if (!t) return;
   const s = data.students.find((x) => x.id === sel);
   if (t.dataset.sel) { sel = t.dataset.sel; return render(); }
-  if (t.dataset.limit !== undefined) { data.settings = (await (await post("../api/settings", { settings: { ...data.settings, limit: Number(t.dataset.limit) } })).json()); return render(); }
-  if (t.dataset.sfx) { data.settings = (await (await post("../api/settings", { settings: { ...data.settings, sfx: !data.settings.sfx } })).json()); return render(); }
+  if (t.dataset.limit !== undefined) { await setSettings({ ...data.settings, limit: Number(t.dataset.limit) }); return render(); }
+  if (t.dataset.sfx) { await setSettings({ ...data.settings, sfx: !data.settings.sfx }); return render(); }
   if (!s) return;
   if (t.dataset.act === "csv") return csv(s);
   if (t.dataset.act === "summary") return summary(s);
-  if (t.dataset.act === "sample") { sampleRuns(s); s.updated = Date.now(); await post("../api/student", { student: s }); return load(); }
-  if (t.dataset.act === "remove" && confirm(`Remove ${s.name} and all their runs?`)) { await post("../api/student/delete", { id: s.id }); sel = null; return load(); }
+  if (t.dataset.act === "sample") { sampleRuns(s); await saveStudent(s); return load(); }
+  if (t.dataset.act === "remove" && confirm(`Remove ${s.name} and all their runs?`)) { await removePlayer(s.id); sel = null; return load(); }
 });
 
 load();

@@ -5,6 +5,8 @@
 // A name goes into the page, so only letters, numbers, spaces, "_" and "-" are kept, at most 12 characters.
 const cleanName = (n) => String(n).replace(/[^\p{L}\p{N} _-]/gu, "").trim().slice(0, 12).trim();
 
+// Where the student site keeps its records in the browser. The teacher site reads the same place when there is no server.
+const STORE_KEY = "story-v9";
 const COLOR_NAMES = ["Yellow", "Pink", "Blue", "Green", "Beige", "Cat"];
 // Text that came from outside (the AI, a saved record) is shown as text, never as page code.
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -32,4 +34,4 @@ function removeStudent(data, id) {
 // Only values the game knows how to use: time per question and sound.
 const cleanSettings = (s) => ({ limit: [0, 20, 35, 60].includes(Number(s && s.limit)) ? Number(s.limit) : 35, sfx: !(s && s.sfx === false) });
 
-if (typeof module !== "undefined") module.exports = { COLOR_NAMES, esc, validRun, cleanName, emptyData, mergeStudent, removeStudent, cleanSettings };
+if (typeof module !== "undefined") module.exports = { STORE_KEY, COLOR_NAMES, esc, validRun, cleanName, emptyData, mergeStudent, removeStudent, cleanSettings };
