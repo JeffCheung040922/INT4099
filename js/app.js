@@ -186,6 +186,8 @@ function screenPlayers(editId = null) {
   if (editId) setTimeout(() => $("#rename-input").focus(), 150);
 }
 
+const aiLabel = () => (aiAvailable ? "on" : "off");
+function showVersion() { const v = $("#ver"); if (v) v.textContent = `Version ${(window.STORY_CONFIG || {}).version || "?"} · AI helper ${aiLabel()}`; }
 function screenStories() {
   S = null;
   hidePlay(); setScene(3);
@@ -194,7 +196,9 @@ function screenStories() {
   $("#s-stories").innerHTML = `<button class="who" id="who-chip" aria-label="Change player: tap to switch to the next player">${avatar(student.color)}<span><small>Player</small>${student.name}</span><svg viewBox="0 0 24 24" class="swap" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l-3 3 3 3M4 7h12M17 20l3-3-3-3M20 17H8"/></svg></button>
     <h1>Pick a story</h1>
     <div class="stories">${STORIES.map((st) => `<button class="story" data-story="${st.id}"><div class="thumb">${sceneSvg(st.scene)}<div class="hero">${CAST[st.guide]("smile")}</div>${played(st.id) ? `<i class="played">Played ${played(st.id)}</i>` : ""}${(student.medals || {})[st.id] ? `<div class="cardmedal">${medalSvg(student.medals[st.id])}</div>` : ""}</div><b>${st.title}</b><small>${st.blurb}</small><span class="lv" aria-label="Level ${st.level}">${levelStars(st.level)}</span></button>`).join("")}</div>
-    <div class="actions"><button class="btn small" id="mode-btn">${mode === "quick" ? "Short run (4 questions)" : "Full story (20 questions)"}</button><button class="btn small" id="words-btn">My words ${Object.keys(student.words || {}).length}/${WORD_SLOTS.length}</button><button class="btn small" id="progress-btn">My progress</button></div>`;
+    <div class="actions"><button class="btn small" id="mode-btn">${mode === "quick" ? "Short run (4 questions)" : "Full story (20 questions)"}</button><button class="btn small" id="words-btn">My words ${Object.keys(student.words || {}).length}/${WORD_SLOTS.length}</button><button class="btn small" id="progress-btn">My progress</button></div>
+    <p class="ver" id="ver"></p>`;
+  showVersion();
   show("s-stories");
 }
 
@@ -593,7 +597,7 @@ document.addEventListener("click", (e) => {
 
 // ---------- start
 let aiAvailable = false;
-fetch(AI + "/api/status").then((r) => r.json()).then((j) => { aiAvailable = !!j.ai; }).catch(() => {});
+fetch(AI + "/api/status").then((r) => r.json()).then((j) => { aiAvailable = !!j.ai; }).catch(() => {}).finally(showVersion);
 document.addEventListener("keydown", (e) => {
   // the dialogue can be moved on from the keyboard, too (Space, Enter or the right arrow)
   if (advance && !/^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "") && [" ", "Enter", "ArrowRight"].includes(e.key) && !(document.activeElement && document.activeElement.closest(".skip"))) { e.preventDefault(); advance(); return; }

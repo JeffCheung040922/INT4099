@@ -150,4 +150,11 @@ assert.ok(E.reviewPrompt({ results: [{ target: "words", prompt: 0, wrong: 0 }] }
 assert.ok(E.partTipPrompt("Words", [{ target: "words", prompt: 0, wrong: 0 }]).includes("do not invent a problem"));
 assert.ok(E.reviewPrompt({ results: [{ target: "words", prompt: 0, wrong: 0 }] }).includes("ONE short paragraph") && E.advicePrompt(sum, STORIES, {}).includes("ONE short paragraph"), "the AI is asked for a short paragraph");
 assert.strictEqual(E.parseReview('{"learner":["1","2","3","4","5","6","7"],"teacher":"t"}').learner.length, 6, "up to six sentences are kept");
+// every file the pages load carries the version from config.js, so a new version always replaces a cached one
+const ver = /version: "(\d+)"/.exec(fs.readFileSync(__dirname + "/../config.js", "utf8"))[1];
+for (const page of ["index.html", "teacher/index.html"]) {
+  const refs = [...fs.readFileSync(__dirname + "/../" + page, "utf8").matchAll(/(?:src|href)="((?:\.\.\/)?(?:js\/|css\/|config\.js|teacher\.js|teacher\.css)[^"]*)"/g)].map((m) => m[1]);
+  assert.ok(refs.length >= 4, `${page}: files found`);
+  for (const r of refs) assert.ok(r.endsWith(`?v=${ver}`), `${page}: ${r} must end with ?v=${ver}`);
+}
 console.log("all tests passed");
