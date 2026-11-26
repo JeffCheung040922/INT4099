@@ -42,7 +42,7 @@ export default {
       const model = env.POE_MODEL || "gpt-5.4-mini";
       const up = await fetch("https://api.poe.com/v1/chat/completions", {
         method: "POST", headers: { Authorization: `Bearer ${env.POE_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], max_tokens: 500, temperature: 0.5 }),
+        body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }], max_tokens: 800, temperature: 0.5 }),
         signal: AbortSignal.timeout(25000),
       });
       if (!up.ok) return json({ error: `upstream ${up.status}` }, 502, cors);

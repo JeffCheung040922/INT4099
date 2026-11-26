@@ -148,4 +148,6 @@ assert.strictEqual(E.parseTip("not json"), null);
 assert.ok(E.reviewPrompt({ results: [{ target: "grammar", sub: "past simple", prompt: 1, wrong: 0 }] }, STORIES[2]).includes("past simple"));
 assert.ok(E.reviewPrompt({ results: [{ target: "words", prompt: 0, wrong: 0 }] }).includes("do not invent a weakness"));
 assert.ok(E.partTipPrompt("Words", [{ target: "words", prompt: 0, wrong: 0 }]).includes("do not invent a problem"));
+assert.ok(E.reviewPrompt({ results: [{ target: "words", prompt: 0, wrong: 0 }] }).includes("ONE short paragraph") && E.advicePrompt(sum, STORIES, {}).includes("ONE short paragraph"), "the AI is asked for a short paragraph");
+assert.strictEqual(E.parseReview('{"learner":["1","2","3","4","5","6","7"],"teacher":"t"}').learner.length, 6, "up to six sentences are kept");
 console.log("all tests passed");

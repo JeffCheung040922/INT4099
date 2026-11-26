@@ -369,3 +369,6 @@ h1 { margin: 20px 0 6px; font-size: 50px; font-weight: 800; letter-spacing: -.02
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   .conf, .cloud, .fly { display: none !important; }
 }
+
+.apara { margin: 0 0 12px; padding: 16px 20px; border-radius: 18px; background: #eef5ff; font-size: 21px; line-height: 1.55; font-weight: 600; }
+.more { color: var(--blue); }

@@ -504,7 +504,7 @@ let progressScope = null;
 
 function renderAdvice(adv, source) {
   const next = STORIES.find((st) => st.id === adv.next);
-  $("#advice").innerHTML = adv.learner.map((l) => `<p class="aline">${esc(l)}</p>`).join("");
+  $("#advice").innerHTML = `<p class="apara">${adv.learner.map(esc).join(" ")}</p>`;
   $("#advsrc").textContent = source === "ai" ? "Written by an AI helper from your results." : "Made by the game from your results.";
   $("#advbtn").innerHTML = `${next ? `<button class="btn primary small" data-story="${next.id}">Play: ${next.title}</button>` : ""}${aiAvailable ? '<button class="btn small" id="ask-again">Ask the AI again</button>' : ""}`;
 }
@@ -557,7 +557,10 @@ async function askAi(run) {
 function renderSay(waiting = false) {
   const r = S.run.review;
   if (waiting) { $("#say").innerHTML = `The AI helper is writing your feedback...<small>One moment.</small>`; return; }
-  $("#say").innerHTML = `${r.learner.map(esc).join(" ")}<small>${r.source === "ai" ? "Written by an AI helper. Your teacher checks it before it is shared." : "Made by the game."}</small>`;
+  let shown = [], words = 0;
+  for (const l of r.learner) { if (words >= 30) break; shown.push(l); words += l.split(" ").length; }
+  const more = shown.length < r.learner.length;
+  $("#say").innerHTML = `${shown.map(esc).join(" ")}${more ? ' <b class="more">…</b>' : ""}<small>${more ? "Tap My progress to read all of it. " : ""}${r.source === "ai" ? "Written by an AI helper. Your teacher checks it before it is shared." : "Made by the game."}</small>`;
 }
 
 // ---------- clicks
