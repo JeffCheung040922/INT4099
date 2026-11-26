@@ -94,9 +94,9 @@ function react(el, cls) {
 
 // Dialogue window: the speaker's line is typed out. A tap finishes the line, a second tap goes on (tap=false goes on by itself).
 let advance = null, endNow = null;
-function speak(text, { tap = true } = {}) {
+function speak(text, { tap = true, label = "" } = {}) {
   return new Promise((resolve) => {
-    dock.innerHTML = `<div class="nametag">${SPEAKER[guideName]}</div><div class="line" id="line"></div>${tap ? '<button class="skip">Skip ▸▸</button><div class="next"></div>' : ""}`;
+    dock.innerHTML = `<div class="nametag">${SPEAKER[guideName]}${label ? ` · ${label}` : ""}</div><div class="line" id="line"></div>${tap ? '<button class="skip">Skip ▸▸</button><div class="next"></div>' : ""}`;
     dock.classList.add("up");
     const el = $("#line");
     let i = 0, done = false;
@@ -400,7 +400,7 @@ function matchTap(el) {
 async function success() {
   const run = S, Q = S.Q, it = Q.it;
   Q.active = false;
-  S.results.push({ qid: it.id, target: it.target, sub: subSkill(it), prompt: Q.hint, wrong: Q.wrong, friend: Q.friend });
+  S.results.push({ qid: it.id, part: S.parts[S.part].id, target: it.target, sub: subSkill(it), prompt: Q.hint, wrong: Q.wrong, friend: Q.friend });
   const alone = Q.hint === 0 && Q.wrong === 0;
   for (const w of itemWords(it)) collectWord(w, alone);
   if (it.card.kind === "label") addCrate(it.card.pic);
@@ -414,7 +414,12 @@ async function success() {
   S.item += 1;
   if (S.item < S.items.length) { obj.querySelectorAll(".ln.ev").forEach((l) => l.classList.remove("ev")); startItem(); return; }
   S.skip = false;
-  for (const line of S.parts[S.part].after || []) { if (S !== run || S.skip) break; await speak(line); }
+  const P = S.parts[S.part], tipP = aiAvailable ? partTip(P) : null;
+  for (const line of P.after || []) { if (S !== run || S.skip) break; await speak(line); }
+  if (S !== run) return;
+  // one sentence from the AI helper about this part (it starts while the pupil reads the lines above); wait at most 5 seconds
+  const tip = tipP && !S.skip ? await Promise.race([tipP, sleep(5000).then(() => null)]) : null;
+  if (tip && S === run) await speak(tip, { label: "AI tip" });
   if (S !== run) return;
   nextPart();
 }
@@ -462,7 +467,7 @@ async function endRun() {
     <div class="endcard"><div class="endrow"><b style="font-size:17px">Your words today</b>${words || '<span class="note2">No new words this time.</span>'}</div>
     <div class="say" id="say"></div>
     <div class="actions"><button class="btn primary" id="again">Play again</button><button class="btn" id="progress-story-btn">My progress</button><button class="btn" id="to-who2">More stories</button></div></div>`;
-  show("s-end"); renderSay();
+  show("s-end"); renderSay(aiAvailable);
   const m = document.createElement("div");
   m.className = "bigmedal"; m.innerHTML = `${medalSvg(medal)}<b>${MEDAL_TEXT[medal]}</b>`;
   $("#s-end").appendChild(m);
@@ -529,19 +534,28 @@ async function askAdvice(force) {
   } catch { renderAdvice(base, "template"); }
 }
 
+// One sentence from the AI helper about the part that was just finished. null if the AI is not there or gives no usable answer.
+async function partTip(P) {
+  try {
+    const mine = S.results.filter((r) => r.part === P.id);
+    const res = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: partTipPrompt(P.title, mine) }) });
+    return parseTip((await res.json()).text);
+  } catch { return null; }
+}
+
 async function askAi(run) {
   try {
     const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 22000);
-    const res = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: reviewPrompt(run) }), signal: ctrl.signal });
+    const res = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: reviewPrompt(run, S && S.story) }), signal: ctrl.signal });
     const j = parseReview((await res.json()).text);
-    if (!j) return;
-    run.review = { ...j, source: "ai" }; save();
-    if ($("#s-end").classList.contains("show") && S && S.run === run) renderSay();
-  } catch { /* the template review stays */ }
+    if (j) { run.review = { ...j, source: "ai" }; save(); }
+  } catch { /* the game's own text stays */ }
+  if ($("#s-end").classList.contains("show") && S && S.run === run) renderSay(false);
 }
 
-function renderSay() {
+function renderSay(waiting = false) {
   const r = S.run.review;
+  if (waiting) { $("#say").innerHTML = `The AI helper is writing your feedback...<small>One moment.</small>`; return; }
   $("#say").innerHTML = `${r.learner.map(esc).join(" ")}<small>${r.source === "ai" ? "Written by an AI helper. Your teacher checks it before it is shared." : "Made by the game."}</small>`;
 }
 

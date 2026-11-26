@@ -72,10 +72,20 @@ function reviewTemplate(run, name, hero = "Sophie") {
 }
 
 // Anonymous prompt for a real AI model: statistics only. No name, school or free text from the learner.
-function reviewPrompt(run) {
+function reviewPrompt(run, story = null) {
   const HELP = ["answered alone", "needed one hint", "needed two hints", "needed the game to point at the answer"];
-  const rows = run.results.map((r) => `- ${TARGETS[r.target]}: ${HELP[r.prompt]}; ${r.wrong} extra tap${r.wrong === 1 ? "" : "s"}; ${r.friend ? "asked for help" : "did not ask for help"}`).join("\n");
-  return `You help a Hong Kong primary-school English teacher. A Primary 5-6 pupil with mild intellectual disability ("Student A") finished one story practice paper of ${run.results.length} questions (words and pictures, building sentences, grammar and tenses, reading, joining a talk). Results:\n${rows}\nReply ONLY with JSON: {"learner":["sentence 1","sentence 2","sentence 3"],"teacher":"two sentences"}. The learner sentences: warm, very simple words, under 12 words each, spoken to the pupil as "you" (never "I"), say one thing done well and one thing to practise next time. Name the part (for example "Reading") and never use question numbers, the words "hint level", or the word "wrong". Asking for help is a good thing; say so if it happened. The teacher text: say which parts need the most support and what to practise next. Do not invent facts that are not in the data.`;
+  const rows = run.results.map((r) => `- ${TARGETS[r.target]}${r.sub ? ` (${r.sub})` : ""}: ${HELP[r.prompt]}; ${r.wrong} extra tap${r.wrong === 1 ? "" : "s"}; ${r.friend ? "asked for help" : "did not ask for help"}`).join("\n");
+  return `You help a Hong Kong primary-school English teacher. A Primary 5-6 pupil with mild intellectual disability ("Student A") finished one story practice paper${story ? ` ("${story.title}", level ${story.level} of 3)` : ""} of ${run.results.length} questions (words and pictures, building sentences, grammar and tenses, reading, joining a talk). Results:\n${rows}\nReply ONLY with JSON: {"learner":["sentence 1","sentence 2","sentence 3"],"teacher":"two sentences"}. The learner sentences: warm, very simple words, under 12 words each, spoken to the pupil as "you" (never "I"), line 1 names one thing done well, line 2: if any question needed a hint, give ONE concrete suggestion for that point (name the grammar point); if none did, say the pupil is ready for a harder story; line 3 encourages. Name the part (for example "Reading") and never use question numbers, the words "hint level", or the word "wrong". If every question was answered with no hint, say so and praise the pupil; do not invent a weakness. Asking for help is a good thing; say so if it happened. The teacher text: say which parts need the most support and what to practise next. Do not invent facts that are not in the data.`;
+}
+
+// One short tip after each part of a story. Numbers only; no name.
+function partTipPrompt(title, results) {
+  const alone = results.filter(isIndependent).length;
+  const helped = results.filter((r) => !isIndependent(r)).map((r) => r.sub || TARGETS[r.target]);
+  return `You help a Hong Kong primary-school English teacher. A Primary 5-6 pupil with mild intellectual disability just finished the part "${title}" of a tap-only English story: ${alone} of ${results.length} questions answered with no hint${helped.length ? `; hints were needed for: ${[...new Set(helped)].join(", ")}` : ""}. Write ONE short, warm sentence (under 14 words) spoken to the pupil as "you": praise what went well and, if hints were needed, give one tiny tip for that point. If no hints were needed, only praise; do not invent a problem. Never use the words "wrong" or "fail". Reply ONLY with JSON: {"tip":"the sentence"}.`;
+}
+function parseTip(text) {
+  try { const m = String(text).match(/\{[\s\S]*\}/); const t = JSON.parse(m ? m[0] : text).tip; return typeof t === "string" && t.trim() && t.length <= 160 ? t.trim() : null; } catch { return null; }
 }
 
 // Tolerant parser for the AI reply (plain JSON, or JSON inside a code fence).
@@ -150,5 +160,5 @@ function parseAdvice(text, stories) {
 }
 
 if (typeof module !== "undefined") {
-  module.exports = { FRIENDLY, subSkill, summarize, lowest, highest, nextStory, adviceTemplate, advicePrompt, parseAdvice, TARGETS, LADDER, DEFAULT_LIMIT, isIndependent, hintLevel, indepRate, shuffle, scramble, weakestTarget, reviewTemplate, reviewPrompt, parseReview };
+  module.exports = { partTipPrompt, parseTip, FRIENDLY, subSkill, summarize, lowest, highest, nextStory, adviceTemplate, advicePrompt, parseAdvice, TARGETS, LADDER, DEFAULT_LIMIT, isIndependent, hintLevel, indepRate, shuffle, scramble, weakestTarget, reviewTemplate, reviewPrompt, parseReview };
 }

@@ -138,4 +138,14 @@ assert.ok(!sync.mergeStudent(sync.emptyData(), { id: "k", name: "Kay", color: "N
 assert.ok(!sync.mergeStudent(sync.emptyData(), { id: "k", name: "Kay", color: "Cat", runs: [{ results: "x", review: {} }] }), "a run without answers or a review");
 assert.ok(!sync.mergeStudent(sync.emptyData(), { id: "k", name: "Kay", color: "Cat", runs: [{ ...okRun, review: { learner: "x", teacher: "y" } }] }), "a review whose lines are not a list");
 assert.strictEqual(sync.esc('<img src=x onerror="a">&\''), "&lt;img src=x onerror=&quot;a&quot;&gt;&amp;&#39;");
+// AI tips: anonymous, built from numbers, and only a short usable sentence is accepted
+const tipRes = [{ target: "grammar", sub: "past simple", prompt: 1, wrong: 0 }, { target: "words", prompt: 0, wrong: 0 }];
+const tipPrompt = E.partTipPrompt("Sentences", tipRes);
+assert.ok(tipPrompt.includes("1 of 2") && tipPrompt.includes("past simple") && !/[Nn]ame:/.test(tipPrompt));
+assert.strictEqual(E.parseTip('{"tip":"Nice work. Look at the time word next time."}'), "Nice work. Look at the time word next time.");
+assert.strictEqual(E.parseTip('{"tip":"' + "x".repeat(200) + '"}'), null, "a very long tip is refused");
+assert.strictEqual(E.parseTip("not json"), null);
+assert.ok(E.reviewPrompt({ results: [{ target: "grammar", sub: "past simple", prompt: 1, wrong: 0 }] }, STORIES[2]).includes("past simple"));
+assert.ok(E.reviewPrompt({ results: [{ target: "words", prompt: 0, wrong: 0 }] }).includes("do not invent a weakness"));
+assert.ok(E.partTipPrompt("Words", [{ target: "words", prompt: 0, wrong: 0 }]).includes("do not invent a problem"));
 console.log("all tests passed");
