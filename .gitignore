@@ -1,0 +1,7 @@
+# not part of the demo: old assets, players' records, test screenshots, logs
+_src/
+data/
+shots*/
+*.log
+.DS_Store
+node_modules/

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Story Time</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="rotate" role="alert"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="18" y="6" width="28" height="44" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><path d="M12 54c6 6 16 8 26 4M44 60l-6-2 2-6" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><b>Turn your screen sideways</b><span>The game is for a wide screen.</span></div>
+<div id="stage">
+  <div id="scene"><div class="bg"></div><div class="bg"></div></div>
+  <div id="guide" class="char" hidden></div>
+  <div id="player" class="char right" hidden></div>
+  <div id="crowd"></div>
+  <div id="props"></div>
+  <div id="obj" hidden></div>
+
+  <div id="hud" hidden>
+    <button class="round" id="btn-pause" aria-label="Pause"></button>
+    <div id="steps" aria-label="Progress"></div>
+    <div id="helped" class="chip"><span id="heart"></span><b id="helped-n">0</b></div>
+  </div>
+
+  <div id="dock" aria-live="polite"></div>
+  <div id="title" hidden></div>
+
+  <section id="s-stories" class="screen"></section>
+  <section id="s-end" class="screen"></section>
+  <section id="s-words" class="screen"></section>
+  <section id="s-progress" class="screen"></section>
+  <section id="s-name" class="screen"></section>
+  <section id="s-players" class="screen"></section>
+  <section id="s-teacher" class="screen"></section>
+  <section id="s-pause" class="screen"></section>
+</div>
+<script src="js/art.js"></script>
+<script src="js/story.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

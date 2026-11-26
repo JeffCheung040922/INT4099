@@ -1,0 +1,7 @@
+Pictograms in this folder come from ARASAAC (Aragonese Portal of Augmentative and Alternative Communication), http://arasaac.org.
+Licence: Creative Commons BY-NC-SA (non-commercial, attribution, share-alike). Used here for a non-commercial university course prototype.
+Credit line (the wording ARASAAC asks for; confirm it on arasaac.org before any wider release):
+  Pictographic symbols: Sergio Palao, origin ARASAAC (http://arasaac.org), owner Government of Aragon (Spain), licence CC BY-NC-SA.
+Files were only resized to 320 px. manifest.json maps each word to its ARASAAC pictogram number (static.arasaac.org/pictograms/<id>/<id>_500.png).
+Because of the share-alike term, these resized files stay under CC BY-NC-SA; the app code is separate.
+Added 2026-11-26: rocket (2344), moon (2933), star (2752), planet (2829), robot (6208), astronaut (4569). Same licence and credit line as above; resized to 320 px.
