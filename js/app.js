@@ -1,6 +1,7 @@
 // A Day with Aunt Sophie: story practice paper. Needs art.js, story.js and engine.js loaded first.
 const W = 1024, H = 640;
 const $ = (s) => document.querySelector(s);
+const AI = (window.STORY_CONFIG && STORY_CONFIG.aiBase) || ""; // "" = this server; on the public site, the Worker address (config.js)
 const params = new URLSearchParams(location.search);
 const dock = $("#dock"), obj = $("#obj");
 
@@ -524,7 +525,7 @@ async function askAdvice(force) {
   $("#advsrc").textContent = "Asking the AI helper...";
   try {
     const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 22000);
-    const res = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: advicePrompt(sum, STORIES, medals, scope) }), signal: ctrl.signal });
+    const res = await fetch(AI + "/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: advicePrompt(sum, STORIES, medals, scope) }), signal: ctrl.signal });
     const j = parseAdvice((await res.json()).text, STORIES);
     if (!j) { renderAdvice(base, "template"); return; }
     // The AI must not send a pupil back to a story that already has a gold medal: use the game's own line instead.
@@ -538,7 +539,7 @@ async function askAdvice(force) {
 async function partTip(P) {
   try {
     const mine = S.results.filter((r) => r.part === P.id);
-    const res = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: partTipPrompt(P.title, mine) }) });
+    const res = await fetch(AI + "/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: partTipPrompt(P.title, mine) }) });
     return parseTip((await res.json()).text);
   } catch { return null; }
 }
@@ -546,7 +547,7 @@ async function partTip(P) {
 async function askAi(run) {
   try {
     const ctrl = new AbortController(); setTimeout(() => ctrl.abort(), 22000);
-    const res = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: reviewPrompt(run, S && S.story) }), signal: ctrl.signal });
+    const res = await fetch(AI + "/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: reviewPrompt(run, S && S.story) }), signal: ctrl.signal });
     const j = parseReview((await res.json()).text);
     if (j) { run.review = { ...j, source: "ai" }; save(); }
   } catch { /* the game's own text stays */ }
@@ -589,7 +590,7 @@ document.addEventListener("click", (e) => {
 
 // ---------- start
 let aiAvailable = false;
-fetch("/api/status").then((r) => r.json()).then((j) => { aiAvailable = !!j.ai; }).catch(() => {});
+fetch(AI + "/api/status").then((r) => r.json()).then((j) => { aiAvailable = !!j.ai; }).catch(() => {});
 document.addEventListener("keydown", (e) => {
   // the dialogue can be moved on from the keyboard, too (Space, Enter or the right arrow)
   if (advance && !/^(INPUT|TEXTAREA)$/.test((document.activeElement || {}).tagName || "") && [" ", "Enter", "ArrowRight"].includes(e.key) && !(document.activeElement && document.activeElement.closest(".skip"))) { e.preventDefault(); advance(); return; }

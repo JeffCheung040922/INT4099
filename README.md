@@ -14,11 +14,18 @@ POE_API_KEY=your-key node server.mjs  # the same, with AI feedback (the key stay
 No build step and no packages are needed (Node 18 or newer). Opening `index.html` directly also works for the student
 site; records then stay in that browser and the teacher site and AI feedback are off.
 
+## AI on the public site (GitHub Pages)
+
+The public site has no server, so the AI goes through a small Cloudflare Worker that holds the key (`worker/`, see
+`worker/README.md`). Until it is deployed and its address is put in `config.js`, the public site shows the game's own
+feedback text. Records on the public site stay in each player's own browser.
+
 ## Check it
 
 ```
 node js/test.js          # stories, questions, hints, advice, record merging
 node test-server.mjs     # server: bad URLs, other sites, bad records
+node worker/test-worker.mjs   # AI door for the public site: other sites, odd prompts, call limits
 ```
 
 ## Notes

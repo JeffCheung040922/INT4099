@@ -1,0 +1,9 @@
+name = "story-time-ai"
+main = "index.js"
+compatibility_date = "2024-11-01"
+
+# Counts used for the limits. Create it once:  npx wrangler kv namespace create LIMITS   then paste the id here.
+kv_namespaces = [{ binding = "LIMITS", id = "REPLACE_WITH_THE_ID_FROM_THE_COMMAND" }]
+
+# Secrets (not stored in this file):  npx wrangler secret put POE_API_KEY
+# Optional variable: ALLOWED_ORIGINS = "https://your-name.github.io"  (comma separated; the default is the Pages site)

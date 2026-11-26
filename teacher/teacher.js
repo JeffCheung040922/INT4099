@@ -1,6 +1,7 @@
 // Teacher site: shows how each player is doing and sets the game's settings. The records come from the server (server.mjs).
 // With no server (for example on GitHub Pages) it reads the same browser's records instead, so both sites still work on one device.
 const $ = (s) => document.querySelector(s);
+const AI = (window.STORY_CONFIG && STORY_CONFIG.aiBase) || ""; // set in config.js on the public site
 let data = emptyData(), sel = null, aiOn = false, local = false;
 const levelStars = (n) => [1, 2, 3].map((i) => `<svg viewBox="0 0 24 24" class="star ${i <= n ? "on" : ""}" aria-hidden="true"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.4 7L12 17.5 5.8 21l1.4-7L2 9.3l7-.8z"/></svg>`).join("");
 const pct = (o) => (o ? Math.round(o.rate * 100) + "%" : "–");
@@ -23,8 +24,9 @@ async function load() {
     $("#status").textContent = `Updated ${new Date().toLocaleTimeString()} · AI helper ${aiOn ? "on" : "off"}`;
   } catch {
     const st = readLocal(); local = true; aiOn = false;
+    if (AI) { try { aiOn = !!(await (await fetch(AI + "/api/status")).json()).ai; } catch { /* the AI helper is not reachable */ } }
     data = { ...emptyData(), students: (st.students || []).filter((x) => x && Array.isArray(x.runs) && COLOR_NAMES.includes(x.color)), settings: cleanSettings(st.settings) };
-    $("#status").textContent = "No server: showing this browser's records (open the student site in this same browser). No AI.";
+    $("#status").textContent = `No server: showing this browser's records (open the student site in this same browser). AI helper ${aiOn ? "on" : "off"}.`;
   }
   if (!sel || !data.students.some((s) => s.id === sel)) sel = data.students[0] ? data.students[0].id : null;
   const snapshot = JSON.stringify([data, sel]);
@@ -94,7 +96,7 @@ function csv(s) {
 async function summary(s) {
   const box = $("#summary"); box.textContent = "Asking the AI helper...";
   try {
-    const res = await fetch("../api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: advicePrompt(summarize(s.runs), STORIES, s.medals || {}) }) });
+    const res = await fetch(local && AI ? AI + "/api/review" : "../api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: advicePrompt(summarize(s.runs), STORIES, s.medals || {}) }) });
     const j = parseAdvice((await res.json()).text, STORIES);
     box.textContent = j ? j.teacher : "The AI helper gave no usable answer. Try again.";
     if (j) box.insertAdjacentHTML("afterend", '<p class="note">AI draft from anonymous numbers. Check it before you use it.</p>');
